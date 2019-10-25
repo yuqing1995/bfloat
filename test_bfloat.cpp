@@ -7,8 +7,9 @@ int main()
 {
    cout<<"BFloat16 Calculation\n";
    // Test binary2float
-   Bfloat16 bfloat1(-8.1852e-34); // -8.1852e-34
-   Bfloat16 bfloat2(-1.25185e-33); // -1.25185e-33
+
+   Bfloat16 bfloat1(-8.1852); // -8.1852
+   Bfloat16 bfloat2(-1.25185); // -1.25185e-33
    Bfloat16 bfloat3(-1.0625); // -1.0625
    Bfloat16 bfloat4(1.625); // 1.625
    cout<<"binary2float:\nap_float1: " << bfloat1.binary2float() << endl;

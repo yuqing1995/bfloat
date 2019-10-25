@@ -72,7 +72,11 @@ float Bfloat16::binary2float() {
     return _neg == 1 ? float(0.0 - (pow(2, e) * (1 + f))) : float(pow(2, e) * (1 + f));
 }
 
-void Bfloat16::float2binary(const float temp) {
+
+void Bfloat16::float2binary(const float f) {
+    // Assign private variable
+    _neg = f < 0 ? 1 : 0;
+    float temp = abs(f);
     int integer = int(temp);
     float fp = temp - integer;
     int size = log2(integer) + 1;
@@ -97,8 +101,7 @@ void Bfloat16::float2binary(const float temp) {
             }
         }
     }
-    // Assign private variable
-    _neg = temp < 0 ? 1 : 0;
+
     cout << "neg: " << _neg<<" exp: "<<_exp<<" frac: "<<_frac<<endl;
 }
 
