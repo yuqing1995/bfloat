@@ -1,7 +1,9 @@
-#ifndef BFLOAT16_V2_HPP
-#define BFLOAT16_V2_HPP
+#ifndef BFLOAT16_HPP
+#define BFLOAT16_HPP
 
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <vector>
 #include <string>
@@ -23,33 +25,32 @@ public:
         // Operation Function 
         float binary2float();
         void float2binary(const float temp);
-        void normalize(const Bfloat& f);
-        Bfloat16 operator+(const Bfloat16& f);
-        Bfloat16 operator-(const Bfloat16& f);
-        Bfloat16 operator*(const Bfloat16& f);
-        Bfloat16 operator/(const Bfloat16& f);
+        void normalize(Bfloat16* f);
+        void operator+( Bfloat16& f );
+        void operator-( Bfloat16& f );
+        Bfloat16 operator*( Bfloat16& f );
+        Bfloat16 operator/( Bfloat16& f );
+        Bfloat16& operator=(const float temp);
         bool operator==(const Bfloat16& f);
         bool operator<(const Bfloat16& f);
 private:
         // number of bits of exponent
-        // char _exp[8];
         int _exp;
         // number of bits of precision
-        // char _frac[7];
         int _frac;
         // Bias of exponent for fix 16
         int _bias;
         // true if it is a negative number or false vice versa
         bool _neg;
 };
-void normalize(const Bfloat& f){
-    int dis = abs(_exp - f._exp);
-    if (_exp > f._exp ){
-        f._exp = _exp;
-        f._frac = (f._frac >> dis);
+void Bfloat16::normalize( Bfloat16* f ){
+    size_t dis = _exp > f->_exp ? _exp - f->_exp : f->_exp - _exp;
+    if (_exp > f->_exp ){
+        f->_exp = _exp;
+        f->_frac = (f->_frac >> dis);
     }
-    else if (_exp < f._exp){
-        _exp = f._exp;
+    else if (_exp < f->_exp){
+        _exp = f->_exp;
         _exp = (_exp >> dis);
     }else{}
 }
@@ -71,11 +72,11 @@ float Bfloat16::binary2float() {
     return _neg == 1 ? float(0.0 - (pow(2, e) * (1 + f))) : float(pow(2, e) * (1 + f));
 }
 
-Bfloat16 operator+(const Bfloat16& f){
+void Bfloat16::operator+( Bfloat16& f){
     if (_neg != f._neg){
         
     }
-    normalize(f);
+    normalize(&f);
     _frac = _frac + f._frac;
     // Shif bits when _frac is out of bound
     if (_frac > 127){
@@ -83,27 +84,28 @@ Bfloat16 operator+(const Bfloat16& f){
         _frac = (_frac >> tmp);
         _exp += tmp;
     }
+
 }
 
-Bfloat16 operator-(const Bfloat16& f){
-    normalize(f);
-    if (this._neg == f._neg && this._neg > 0){
+void Bfloat16::operator-( Bfloat16& f){
+    normalize(&f);
+    if (_neg == f._neg && _neg > 0){
         if (_frac < f._frac){
-            this._frac = f._frac - this._frac;
-            this._neg = 1;
+            _frac = f._frac - _frac;
+            _neg = 1;
         }
         else { // zero or positive case;
-            this._frac = _frac - f._frac;
+            _frac -= _frac - f._frac;
         }
     }
-    else if (this._neg == f._neg && this._neg < 0){
-        if (_frac > f._frac{
-            this._frac = f._frac - this._frac;
-            this._neg = 1;
+    else if (_neg == f._neg && _neg < 0){
+        if (_frac > f._frac){
+            _frac = f._frac - _frac;
+            _neg = 1;
         }
         else { // zero or positive case;
-            this._frac = _frac - f._frac;
-            this._neg = 0;
+            _frac = _frac - f._frac;
+            _neg = 0;
         }
     }
     else {
@@ -116,9 +118,10 @@ Bfloat16 operator-(const Bfloat16& f){
           _exp += tmp;
         }
     }
+
 }
 
-bool operator <( const Bfloat16& f){
+bool Bfloat16::operator <( const Bfloat16& f){
     if (_neg == 1 && f._neg == 0){
         return true;
     }
@@ -126,52 +129,51 @@ bool operator <( const Bfloat16& f){
         return false;
     }
     else if (f._neg == 1 && _neg == 1){
-        return (_exp > f._exp || (_exp == f._exp && _frac > f._frac);
+        return (_exp > f._exp || (_exp == f._exp && _frac > f._frac));
     }
     else{
-        return (_exp < f._exp || (_exp == f._exp && _frac < f._frac);
+        return (_exp < f._exp || (_exp == f._exp && _frac < f._frac));
     }
 }
 
-bool operator==(const Bfloat16& f){
+bool Bfloat16::operator==(const Bfloat16& f){
     return (_frac == f._frac && _exp == _exp && _neg == f._neg);
+}
+
+Bfloat16& Bfloat16::operator=(const float temp){
+    _bias = 127;
+    _exp = 0;
+    _frac = 0;
+    float2binary(temp);
+    return *this;
 }
 
 void Bfloat16::float2binary(const float f) {
     // Assign private variable
     _neg = f < 0 ? 1 : 0;
-    float temp = abs(f);
-    cout << temp << endl;
-    int integer = int(temp);
+    float temp = f > 0 ? f : (0 - f);
+    int integer = temp;
     float fp = temp - integer;
-    cout << fp << endl;
     if (integer == 0){
         _exp = (int)(log2(fp)) + _bias;
         _frac = 0;
+        cout << "neg: " << _neg<<" exp: "<<_exp<<" frac: "<<_frac<<endl;
         return;
     }
     int size = (int)(log2(integer));
-    cout << size << endl;
-    int floatBinary[7];
-    // Construct the binary array of char with '0' and '1'
-    int idx = size - 2;
-    for (; idx > 0; idx--){
-        frac <= (integer % 2)
-        floatBinary[idx] = (integer % 2);
+    size_t idx = 0;
+    for (; idx < size; idx++){
+        _frac |= (integer % 2) << idx;
         integer = integer / 2;
     }
     _exp = size + _bias;
-    for(int i = idx; i < 7; i++){
-        fp = 2 * fp;
+    _frac <<= (7 - idx);
+    for(size_t i = 0; i < 7 - idx; i++){
+        fp = 2.0 * fp;
         if (fp > 1){
-            floatBinary[i] = 1;
+            _frac |= 1 << (7 - idx - i - 1);
             fp = fp - 1;
-        }else{
-            floatBinary[i] = 0;
         }
-    }
-    for (int i = 6; i >= 0; i--){
-        _frac += floatBinary[i] == 1 ? pow(2, i) : 0;
     }
     cout << "neg: " << _neg<<" exp: "<<_exp<<" frac: "<<_frac<<endl;
 }
