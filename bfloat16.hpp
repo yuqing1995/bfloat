@@ -25,15 +25,17 @@ public:
         // Operation Function 
         float binary2float();
         void float2binary(const float temp);
-        void normalize(Bfloat16* f);
-        void operator+( Bfloat16& f );
-        void operator-( Bfloat16& f );
+        Bfloat16 operator+(const Bfloat16& f);
+        Bfloat16 operator-(const Bfloat16& f);
         Bfloat16 operator*( Bfloat16& f );
         Bfloat16 operator/( Bfloat16& f );
         Bfloat16& operator=(const float temp);
         bool operator==(const Bfloat16& f);
         bool operator<(const Bfloat16& f);
-private:
+        // helper function (non-member function)
+        void normalize2bfloats(Bfloat16* lhs_f, Bfloat16* rhs_f);
+        void normalizebfloat(Bfloat16* f);
+private:        
         // number of bits of exponent
         int _exp;
         // number of bits of precision
@@ -43,17 +45,7 @@ private:
         // true if it is a negative number or false vice versa
         bool _neg;
 };
-void Bfloat16::normalize( Bfloat16* f ){
-    size_t dis = _exp > f->_exp ? _exp - f->_exp : f->_exp - _exp;
-    if (_exp > f->_exp ){
-        f->_exp = _exp;
-        f->_frac = (f->_frac >> dis);
-    }
-    else if (_exp < f->_exp){
-        _exp = f->_exp;
-        _exp = (_exp >> dis);
-    }else{}
-}
+
 
 float Bfloat16::binary2float() {
     // Use formular v = s × 2^e × (1 + f) to transfer the floating point
@@ -72,53 +64,63 @@ float Bfloat16::binary2float() {
     return _neg == 1 ? float(0.0 - (pow(2, e) * (1 + f))) : float(pow(2, e) * (1 + f));
 }
 
-void Bfloat16::operator+( Bfloat16& f){
-    if (_neg != f._neg){
-        
+void Bfloat16::normalize2bfloats(Bfloat16* lhs_f, Bfloat16* rhs_f){
+    size_t dis = (lhs_f->_exp > rhs_f->_exp) ?
+        (lhs_f->_exp) - (rhs_f->_exp) : (rhs_f->_exp) - (lhs_f->_exp);
+    if (lhs_f->_exp > rhs_f->_exp ){
+        rhs_f->_exp = lhs_f->_exp;
+        rhs_f->_frac = ((rhs_f->_frac + 128) >> dis);
+        lhs_f->_frac = lhs_f->_frac + 128;
     }
-    normalize(&f);
-    _frac = _frac + f._frac;
-    // Shif bits when _frac is out of bound
-    if (_frac > 127){
-        int tmp = _frac % 127;
-        _frac = (_frac >> tmp);
-        _exp += tmp;
-    }
-
-}
-
-void Bfloat16::operator-( Bfloat16& f){
-    normalize(&f);
-    if (_neg == f._neg && _neg > 0){
-        if (_frac < f._frac){
-            _frac = f._frac - _frac;
-            _neg = 1;
-        }
-        else { // zero or positive case;
-            _frac -= _frac - f._frac;
-        }
-    }
-    else if (_neg == f._neg && _neg < 0){
-        if (_frac > f._frac){
-            _frac = f._frac - _frac;
-            _neg = 1;
-        }
-        else { // zero or positive case;
-            _frac = _frac - f._frac;
-            _neg = 0;
-        }
+    else if (lhs_f->_exp < rhs_f->_exp ){
+        lhs_f->_exp = rhs_f->_exp;
+        lhs_f->_frac = ((lhs_f->_frac + 128) >> dis);
+        rhs_f->_frac = rhs_f->_frac + 128;
     }
     else {
-        // positive number
-        _neg = 0;
-        _frac = _frac + f._frac;
-        if (_frac > 127){
-          int tmp = _frac % 127;
-          _frac = (_frac >> tmp);
-          _exp += tmp;
-        }
+        lhs_f->_frac = lhs_f->_frac + 128;
+        rhs_f->_frac = rhs_f->_frac + 128;
     }
+}
 
+void Bfloat16::normalizebfloat(Bfloat16* f) {
+    if (f->_frac < 0) {
+      f->_neg = 1;
+      f->_frac = -f->_frac;
+    }
+    else {
+      f->_neg = 0;
+    }
+    if (f->_frac > 255) {
+      int shift = f->_frac / 256;
+      f->_frac = f->_frac >> shift;
+      f->_exp = f->_exp + shift;
+    }
+    if (f->_frac < 128) {
+      f->_frac = f->_frac << 1;
+      f->_exp -= 1; 
+    }
+    f->_frac -= 128;
+}
+
+Bfloat16 Bfloat16::operator+(const Bfloat16& f){
+    Bfloat16 lhs_f = *this;
+    Bfloat16 rhs_f = f;
+    normalize2bfloats(&lhs_f, &rhs_f);
+    lhs_f._frac = (lhs_f._neg == 1 ? -lhs_f._frac : lhs_f._frac) +
+      (rhs_f._neg == 1 ? -rhs_f._frac : rhs_f._frac);
+    normalizebfloat(&lhs_f);
+    return lhs_f;
+}
+
+Bfloat16 Bfloat16::operator-(const Bfloat16& f){
+    Bfloat16 lhs_f = *this;
+    Bfloat16 rhs_f = f;
+    normalize2bfloats(&lhs_f, &rhs_f);
+    lhs_f._frac = (lhs_f._neg == 1 ? -lhs_f._frac : lhs_f._frac) -
+      (rhs_f._neg == 1 ? -rhs_f._frac : rhs_f._frac);
+    normalizebfloat(&lhs_f);
+    return lhs_f;
 }
 
 bool Bfloat16::operator <( const Bfloat16& f){
@@ -136,8 +138,8 @@ bool Bfloat16::operator <( const Bfloat16& f){
     }
 }
 
-bool Bfloat16::operator==(const Bfloat16& f){
-    return (_frac == f._frac && _exp == _exp && _neg == f._neg);
+bool Bfloat16::operator==(const Bfloat16& f2){
+    return (_frac == f2._frac && _exp == f2._exp && _neg == f2._neg);
 }
 
 Bfloat16& Bfloat16::operator=(const float temp){

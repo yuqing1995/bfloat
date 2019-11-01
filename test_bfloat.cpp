@@ -8,15 +8,21 @@ int main()
    cout<<"BFloat16 Calculation\n";
    // Test binary2float
 
-   Bfloat16 bfloat1(45.5); // -8.1852
-   Bfloat16 bfloat2 = 23.4;
-   Bfloat16 bfloat3(-0.0625); // -1.0625
-   Bfloat16 bfloat4 = 1.625; // 1.625
-   //bfloat1 + bfloat2;
-   cout<<"binary2float:\nap_float1: " << bfloat1.binary2float() << endl;
-   cout<<"ap_float2: " << bfloat2.binary2float() << endl;
-   cout<<"ap_float3: " << bfloat3.binary2float() << endl;
-   cout<<"ap_float4: " << bfloat4.binary2float() << endl;
+   Bfloat16 bfloat1(45.5);
+   Bfloat16 bfloat2 = -23.4;
+   Bfloat16 bfloat3 = -0.0625;
+   Bfloat16 bfloat4 = 45.5;
+   Bfloat16 bfloat5 = bfloat1 + bfloat2;
+   Bfloat16 bfloat6 = bfloat1 - bfloat2;
+   Bfloat16 bfloat7 = bfloat2 + bfloat3;
+   bool equal = bfloat1 == bfloat4;
+   cout<<"bfloat1: " << bfloat1.binary2float() << endl;
+   cout<<"bfloat2: " << bfloat2.binary2float() << endl;
+   cout<<"bfloat3: " << bfloat3.binary2float() << endl;
+   cout<<bfloat1.binary2float() << " + " << bfloat2.binary2float() << " = " << bfloat5.binary2float() << endl;
+   cout<<bfloat1.binary2float() << " - " << bfloat2.binary2float()<< " = " << bfloat6.binary2float() << endl;
+   cout<<bfloat2.binary2float() << " - " << bfloat3.binary2float()<< " = " << bfloat7.binary2float() << endl;
+   cout<<bfloat1.binary2float() << " == " << bfloat4.binary2float()<<" : " << equal << endl;
    
    
    return 0;
