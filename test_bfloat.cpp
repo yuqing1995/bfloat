@@ -9,15 +9,17 @@ int main()
    // Test binary2float
 
    Bfloat16 bfloat1(45.5);
-   Bfloat16 bfloat2 = -7;
+   Bfloat16 bfloat2 = 10.78;
    Bfloat16 bfloat3 = -0.0625;
-   Bfloat16 bfloat4 = 45.5;
+   Bfloat16 bfloat4 = 8.2;
    Bfloat16 bfloat5 = bfloat1 + bfloat2;
    Bfloat16 bfloat6 = bfloat1 - bfloat2;
    Bfloat16 bfloat7 = bfloat2 + bfloat3;
    Bfloat16 bfloat8 = bfloat1 * bfloat2;
    Bfloat16 bfloat9 = bfloat1 * bfloat3;
    Bfloat16 bfloat10 = bfloat1 / bfloat2;
+   Bfloat16 bfloat11 = bfloat2 / bfloat4;
+   
    bool equal = bfloat1 == bfloat4;
    cout<<"bfloat1: " << bfloat1.binary2float() << endl;
    cout<<"bfloat2: " << bfloat2.binary2float() << endl;
@@ -28,6 +30,7 @@ int main()
    cout<<bfloat1.binary2float() << " == " << bfloat4.binary2float()<<" : " << equal << endl;
    cout<<bfloat1.binary2float() << " * " << bfloat2.binary2float()<< " = " << bfloat8.binary2float() << endl;
    cout<<bfloat1.binary2float() << " * " << bfloat3.binary2float()<< " = " << bfloat9.binary2float() << endl;
-   cout<<bfloat1.binary2float() << " / " << bfloat2.binary2float()<< " = " << bfloat10.binary2float() << endl;   
+   cout<<bfloat1.binary2float() << " / " << bfloat2.binary2float()<< " = " << bfloat10.binary2float() << endl;
+   cout<<bfloat2.binary2float() << " / " << bfloat4.binary2float()<< " = " << bfloat11.binary2float() << endl;   
    return 0;
 }

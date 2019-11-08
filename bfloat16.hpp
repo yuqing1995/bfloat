@@ -151,13 +151,14 @@ Bfloat16 Bfloat16::operator/( Bfloat16& f ){
     rhs_f._frac |= (1 << 7);
     int temp = 0;
     for (int i = 0; i <= 7; i++){
-        if (lhs_f._frac < rhs_f._frac){
+        temp <<= 1;
+        if (lhs_f._frac<<1 < rhs_f._frac){
             lhs_f._frac <<= 1;
         }
         else {
-            temp += 1 >> i;
-        }
-        lhs_f._frac = lhs_f._frac - rhs_f._frac;
+            temp |= 1;
+            lhs_f._frac = lhs_f._frac - rhs_f._frac;
+        }   
     }
     lhs_f._frac = temp;
     normalizebfloat(lhs_f);
@@ -201,7 +202,6 @@ void Bfloat16::float2binary(const float f) {
     if (integer == 0){
         _exp = (int)(log2(fp)) + _bias;
         _frac = 0;
-        cout << "neg: " << _neg<<" exp: "<<_exp<<" frac: "<<_frac<<endl;
         return;
     }
     int size = (int)(log2(integer));
@@ -219,7 +219,7 @@ void Bfloat16::float2binary(const float f) {
             fp = fp - 1;
         }
     }
-    cout << "neg: " << _neg<<" exp: "<<_exp<<" frac: "<<_frac<<endl;
+    //cout << "f: " << f<< ", neg: " << _neg<<", exp: "<<_exp<<", frac: "<<_frac<<endl;
 }
 
 
