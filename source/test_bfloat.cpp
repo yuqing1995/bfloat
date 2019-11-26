@@ -5,11 +5,10 @@ using namespace std;
 
 int main()
 {
-   cout<<"---------------BFloat16 Calculation--------------" <<endl;
+   cout<<"--------------- BFloat16 Calculation --------------" <<endl;
    // Test binary2float
-
-   Bfloat16 bfloat1(45.5);
-   Bfloat16 bfloat2 = 12.5;
+   Bfloat16 bfloat1(1.063);
+   Bfloat16 bfloat2 = 1.8;
    Bfloat16 bfloat3 = -0.0625;
    Bfloat16 bfloat4 = 3;
    Bfloat16 bfloat5 = bfloat1 + bfloat2;
@@ -25,8 +24,8 @@ int main()
    bool compare2 = bfloat3 > bfloat4;
    bool compare3 = bfloat4 < bfloat2;
    
-   //cout<<"bfloat1: " << bfloat1.binary2float() << endl;
-   //cout<<"bfloat2: " << bfloat2.binary2float() << endl;
+   cout<<"bfloat1: " << bfloat1.binary2float() << endl;
+   cout<<"bfloat2: " << bfloat2.binary2float() << endl;
    cout<<"bfloat3: " << bfloat3.binary2float() << endl;
    cout<<bfloat1.binary2float() << " + " << bfloat2.binary2float() << " = " << bfloat5.binary2float() << endl;
    cout<<bfloat1.binary2float() << " - " << bfloat2.binary2float()<< " = " << bfloat6.binary2float() << endl;

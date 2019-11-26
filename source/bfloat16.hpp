@@ -35,8 +35,7 @@ public:
         bool operator<(const Bfloat16& f);
         bool operator>(const Bfloat16& f);
         // helper function (non-member function)
-        void normalize2bfloatsUpwards(Bfloat16& lhs_f, Bfloat16& rhs_f);
-        void normalize2bfloatsDownwards(Bfloat16& lhs_f, Bfloat16& rhs_f);
+        void normalize2bfloats(Bfloat16& lhs_f, Bfloat16& rhs_f);
         void normalizebfloat(Bfloat16& f);
         
 private:        
@@ -51,7 +50,6 @@ private:
         
 };
 
-
 float Bfloat16::binary2float() {
     // Use formular v = s × 2^e × (1 + f) to transfer the floating point
     // Calculate the exponent value and bias based on the digit of exponent
@@ -60,16 +58,17 @@ float Bfloat16::binary2float() {
     int tmp_frac = _frac;
     float f = 0.0;
     int reminder = 0;
-    for (int i = 7; i > 0; i--){
-        reminder = tmp_frac % 2;
-        tmp_frac = tmp_frac / 2;
-        f += reminder * (1/pow(2, i));
+    for (int i = 6; i >= 0; i--){
+        reminder = (tmp_frac & (1 << i)) != 0;
+        if (reminder){
+            f += pow(2.0, -(7-i));
+        }
     }
     // Use formular to calculate the result value based on _neg
     return _neg == 1 ? float(0.0 - (pow(2, e) * (1 + f))) : float(pow(2, e) * (1 + f));
 }
 
-void Bfloat16::normalize2bfloatsUpwards(Bfloat16& lhs_f, Bfloat16& rhs_f){
+void Bfloat16::normalize2bfloats(Bfloat16& lhs_f, Bfloat16& rhs_f){
     size_t dis = (lhs_f._exp > rhs_f._exp) ?
         (lhs_f._exp) - (rhs_f._exp) : (rhs_f._exp) - (lhs_f._exp);
     if (lhs_f._exp > rhs_f._exp ){
@@ -81,25 +80,6 @@ void Bfloat16::normalize2bfloatsUpwards(Bfloat16& lhs_f, Bfloat16& rhs_f){
         lhs_f._exp = rhs_f._exp;
         lhs_f._frac >>= ((lhs_f._frac + 128) >> dis);
         rhs_f._frac |= (1 << 7);
-    }
-    else {
-        lhs_f._frac |= (1 << 7);
-        rhs_f._frac |= (1 << 7);
-    }
-}
-
-void Bfloat16::normalize2bfloatsDownwards(Bfloat16& lhs_f, Bfloat16& rhs_f){
-    size_t dis = (lhs_f._exp > rhs_f._exp) ?
-        (lhs_f._exp) - (rhs_f._exp) : (rhs_f._exp) - (lhs_f._exp);
-    if (lhs_f._exp > rhs_f._exp ){
-        lhs_f._exp = rhs_f._exp;
-        lhs_f._frac = ((lhs_f._frac + 128) << dis);
-        rhs_f._frac |= (1 << 7);
-    }
-    else if (lhs_f._exp < rhs_f._exp ){
-        rhs_f._exp = lhs_f._exp;
-        rhs_f._frac = ((rhs_f._frac + 128) << dis);
-        lhs_f._frac |= (1 << 7);
     }
     else {
         lhs_f._frac |= (1 << 7);
@@ -130,7 +110,7 @@ void Bfloat16::normalizebfloat(Bfloat16& f) {
 Bfloat16 Bfloat16::operator+(const Bfloat16& f){
     Bfloat16 lhs_f = *this;
     Bfloat16 rhs_f = f;
-    normalize2bfloatsUpwards(lhs_f, rhs_f);
+    normalize2bfloats(lhs_f, rhs_f);
     lhs_f._frac = (lhs_f._neg == 1 ? -lhs_f._frac : lhs_f._frac) +
       (rhs_f._neg == 1 ? -rhs_f._frac : rhs_f._frac);
     normalizebfloat(lhs_f);
@@ -140,7 +120,7 @@ Bfloat16 Bfloat16::operator+(const Bfloat16& f){
 Bfloat16 Bfloat16::operator-(const Bfloat16& f){
     Bfloat16 lhs_f = *this;
     Bfloat16 rhs_f = f;
-    normalize2bfloatsUpwards(lhs_f, rhs_f);
+    normalize2bfloats(lhs_f, rhs_f);
     lhs_f._frac = (lhs_f._neg == 1 ? -lhs_f._frac : lhs_f._frac) -
       (rhs_f._neg == 1 ? -rhs_f._frac : rhs_f._frac);
     normalizebfloat(lhs_f);
@@ -170,32 +150,36 @@ Bfloat16 Bfloat16::operator*( Bfloat16& f ){
 Bfloat16 Bfloat16::operator/( Bfloat16& f ){
     Bfloat16 lhs_f = *this;
     Bfloat16 rhs_f = f;
-    lhs_f._exp = lhs_f._exp - rhs_f._exp + lhs_f._bias;
     lhs_f._frac |= (1 << 7);
     rhs_f._frac |= (1 << 7);
-    if (lhs_f._frac < rhs_f._frac){
-        lhs_f._frac = rhs_f._frac;
-    }
-    //cout << "lhs_f.neg: " << lhs_f._neg<<", lhs_f.exp: "<<lhs_f._exp<<", lhs_f.frac: "<<lhs_f._frac<<endl;
-    //cout << "rhs_f.neg: " << rhs_f._neg<<", rhs_f.exp: "<<rhs_f._exp<<", rhs_f.frac: "<<rhs_f._frac<<endl;
-    //normalize2bfloatsDownwards(lhs_f, rhs_f);
-    //cout << "lhs_f.neg: " << lhs_f._neg<<", lhs_f.exp: "<<lhs_f._exp<<", lhs_f.frac: "<<lhs_f._frac<<endl;
-    //cout << "rhs_f.neg: " << rhs_f._neg<<", rhs_f.exp: "<<rhs_f._exp<<", rhs_f.frac: "<<rhs_f._frac<<endl;
-    int temp = 0;
-    for (size_t i = 0; i <= 7; i++){
+    
+    int temp = 0, cnt = 0;
+    for( size_t i = 0; i < 15; i++ ){
+        if (cnt == 8){
+            break;
+        }
         temp <<= 1;
-        if (lhs_f._frac<<1 < rhs_f._frac){
+        if (lhs_f._frac < rhs_f._frac){
+            if (temp == 0) {
+               lhs_f._exp -= 1;
+            }
             lhs_f._frac <<= 1;
         }
         else {
             temp |= 1;
             lhs_f._frac = lhs_f._frac - rhs_f._frac;
-        }   
+            lhs_f._frac <<= 1;
+        }
+        // temp is one increment temp to next digit
+        if (temp != 0) { 
+            cnt++;
+        }
     }
-    lhs_f._frac = temp;
-    normalizebfloat(lhs_f);
+    lhs_f._frac = temp - 128;
+    lhs_f._exp = lhs_f._exp - rhs_f._exp + lhs_f._bias;
     lhs_f._neg = (lhs_f._neg == rhs_f._neg) ? 0 : 1;
     return lhs_f;
+
 }
 
 bool Bfloat16::operator <( const Bfloat16& f){
@@ -248,18 +232,49 @@ void Bfloat16::float2binary(const float f) {
     float fp = temp - integer;
     if (integer == 0){
         _exp = (int8_t)(log2(fp)) + _bias;
-        _frac = 0;
+        for(int i = 0; i < 7; i++){
+                fp = 2.0 * fp;
+            if (fp > 1){
+                _frac |= 1 << (7 - i - 1);
+                fp = fp - 1;
+            }
+        }
+        fp = 2.0 * fp;
+        if (_exp == _bias){
+            _exp = _bias - 1;
+            _frac <<= 1;
+            int mask = 1 << 7;
+            _frac = _frac & ~mask;
+            _frac += (fp >= 1);
+        }
+        if (fp > 1)
+            fp -= 1;
+        //cout << _frac <<", "<<_exp << endl;
+        if ( _frac & 1 && fp * 2.0 >= 1 ){
+            if (_frac == 127){
+                _frac = 0;
+                _exp += 1;
+            }else{
+                _frac += 1;
+            }
+        }
+        //cout << _frac <<", "<<_exp << endl;
         return;
     }
     int size = (int)(log2(integer));
-    size_t idx = 0;
+    int idx = 0, overflow = 0;
     for (; idx < size; idx++){
         _frac |= (uint8_t)(integer % 2) << idx;
+        //cout <<"idx: "<<idx<< " frac: "<<_frac <<endl;
         integer >>= 1;
     }
     _exp = size + _bias;
-    _frac <<= (7 - idx);
-    for(size_t i = 0; i < 7 - idx; i++){
+    while (_frac > 127){
+        overflow = 1;
+       _frac >>= 1; 
+    }
+    _frac <<= idx < 7 ? (7 - idx) : 0;
+    for(int i = 0; i < 7 - idx; i++){
         fp = 2.0 * fp;
         if (fp > 1){
             _frac |= 1 << (7 - idx - i - 1);
@@ -270,6 +285,7 @@ void Bfloat16::float2binary(const float f) {
         cout << "Reach the maximum value" << endl;
         return;
     }
+    //cout <<", exp: "<<_exp<<", frac: "<<_frac<<endl;
     if ( _frac & 1 && fp * 2.0 > 1 ){
         if (_frac == 127){
             _frac = 0;
