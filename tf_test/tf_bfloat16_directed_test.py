@@ -28,36 +28,41 @@ def test_float32_to_bfloat16_simple():
 # test the transformation between float32 and bfloat16
 def test_float32_to_bfloat16():
     outputFile = open('test1.txt','w')
-     
+    foot = 0;
     for i in numpy.arange(0.12, 20.0, 5.0):
       val1 = tf.constant( i , dtype=tf.float32 )
       val1 = tf.cast(val1, tf.bfloat16)
-      outputFile.write('\n')
-      outputFile.write(str(val1.numpy()))
+      outputFile.write('\n' + str(foot))
+      outputFile.write(', '+ str(val1.numpy()))
+      foot+=1;
     
     for i in numpy.arange(0.63, 20.0, 5.0):
       val2 = tf.constant( i , dtype=tf.float32 )
       val2 = tf.cast(val2, tf.bfloat16)
-      outputFile.write('\n')
-      outputFile.write(str(val2.numpy()))
+      outputFile.write('\n'+ str(foot))
+      outputFile.write(', '+ str(val2.numpy()))
+      foot+=1;
       
     for i in numpy.arange(20.432, 130.0, 8.0):
       val3 = tf.constant( i , dtype=tf.float32 )
       val3 = tf.cast(val3, tf.bfloat16)
-      outputFile.write('\n')
-      outputFile.write(str(val3.numpy()))
+      outputFile.write('\n'+ str(foot))
+      outputFile.write(', '+ str(val3.numpy()))
+      foot+=1;
     
     for i in numpy.arange(100.283, 1000.0, 33.0):
       val4 = tf.constant( i , dtype=tf.float32 )
       val4 = tf.cast(val4, tf.bfloat16)
-      outputFile.write('\n')
-      outputFile.write(str(val4.numpy()))
+      print(val4.numpy())
+      outputFile.write('\n'+ str(foot))
+      outputFile.write(', '+ str(val4.numpy()))
+      foot+=1;
   
     outputFile.close()
     
 
 if __name__ == "__main__":
-  test_float32_to_bfloat16_simple()
+  test_float32_to_bfloat16()
       
       
       

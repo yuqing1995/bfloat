@@ -118,12 +118,15 @@ Bfloat16 Bfloat16::operator+(const Bfloat16& f){
 }
 
 Bfloat16 Bfloat16::operator-(const Bfloat16& f){
+    //Bfloat16 lhs_f = *this > f ? *this : f; 
+    //Bfloat16 rhs_f = *this > f ? f : *this;
     Bfloat16 lhs_f = *this;
     Bfloat16 rhs_f = f;
     normalize2bfloats(lhs_f, rhs_f);
-    lhs_f._frac = (lhs_f._neg == 1 ? -lhs_f._frac : lhs_f._frac) -
-      (rhs_f._neg == 1 ? -rhs_f._frac : rhs_f._frac);
+    lhs_f._frac = (lhs_f._neg == 1 ? -lhs_f._frac : lhs_f._frac) \
+        - (rhs_f._neg == 1 ? -rhs_f._frac : rhs_f._frac);
     normalizebfloat(lhs_f);
+    //lhs_f._neg = *this > f ? 0 : 1;
     return lhs_f;
 }
 
@@ -143,7 +146,7 @@ Bfloat16 Bfloat16::operator*( Bfloat16& f ){
     }
     lhs_f._frac = temp >> 7;
     normalizebfloat(lhs_f);
-    lhs_f._neg = (lhs_f._neg == rhs_f._neg) ? 0 : 1;
+    lhs_f._neg = (this->_neg == f._neg) ? 0 : 1;
     return lhs_f;
 }
 
@@ -197,6 +200,21 @@ bool Bfloat16::operator <( const Bfloat16& f){
     }
 }
 
+bool Bfloat16::operator <=( const Bfloat16& f){
+    if (_neg == 1 && f._neg == 0){
+        return true;
+    }
+    else if (f._neg == 1 && _neg == 0){
+        return false;
+    }
+    else if (f._neg == 1 && _neg == 1){
+        return (_exp >= f._exp || (_exp == f._exp && _frac >= f._frac));
+    }
+    else{
+        return (_exp <= f._exp || (_exp == f._exp && _frac <= f._frac));
+    }
+}
+
 bool Bfloat16::operator >( const Bfloat16& f){
     if (_neg == 1 && f._neg == 0){
         return false;
@@ -209,6 +227,21 @@ bool Bfloat16::operator >( const Bfloat16& f){
     }
     else{
         return (_exp > f._exp || (_exp == f._exp && _frac > f._frac));
+    }
+}
+
+bool Bfloat16::operator >=( const Bfloat16& f){
+    if (_neg == 1 && f._neg == 0){
+        return false;
+    }
+    else if (f._neg == 1 && _neg == 0){
+        return true;
+    }
+    else if (f._neg == 1 && _neg == 1){
+        return (_exp <= f._exp || (_exp == f._exp && _frac <= f._frac));
+    }
+    else{
+        return (_exp >= f._exp || (_exp == f._exp && _frac >= f._frac));
     }
 }
 
@@ -226,78 +259,58 @@ Bfloat16& Bfloat16::operator=(const float temp){
 
 void Bfloat16::float2binary(const float f) {
     // Assign private variable
-    _neg = f < 0 ? 1 : 0;
     float temp = f > 0 ? f : (0 - f);
     int integer = temp;
     float fp = temp - integer;
-    if (integer == 0){
-        _exp = (int8_t)(log2(fp)) + _bias;
-        for(int i = 0; i < 7; i++){
-                fp = 2.0 * fp;
-            if (fp > 1){
-                _frac |= 1 << (7 - i - 1);
-                fp = fp - 1;
-            }
-        }
-        fp = 2.0 * fp;
-        if (_exp == _bias){
-            _exp = _bias - 1;
-            _frac <<= 1;
-            int mask = 1 << 7;
-            _frac = _frac & ~mask;
-            _frac += (fp >= 1);
-        }
-        if (fp > 1)
-            fp -= 1;
-        //cout << _frac <<", "<<_exp << endl;
-        if ( _frac & 1 && fp * 2.0 >= 1 ){
-            if (_frac == 127){
-                _frac = 0;
-                _exp += 1;
-            }else{
-                _frac += 1;
-            }
-        }
-        //cout << _frac <<", "<<_exp << endl;
-        return;
-    }
     int size = (int)(log2(integer));
-    int idx = 0, overflow = 0;
+    int idx = 0;
+    int8_t msb = (integer == 0) ? 0 : 1;
+    int mask = 1 << 7;
+    bool overflow = 0;
+
+    _neg = f < 0 ? 1 : 0;
+    _exp = size + _bias;
+
     for (; idx < size; idx++){
-        _frac |= (uint8_t)(integer % 2) << idx;
-        //cout <<"idx: "<<idx<< " frac: "<<_frac <<endl;
+        _frac |= ((integer & 1) != 0) << idx;
         integer >>= 1;
     }
-    _exp = size + _bias;
-    while (_frac > 127){
+    if (size > 7){
+        int dis = size - 7, flag = 0;
         overflow = 1;
-       _frac >>= 1; 
+        if ((_frac & (1 << dis-1)) != 0) flag = 1;
+        _frac >>= dis;
+        if (flag == 1) _frac += 1;
     }
     _frac <<= idx < 7 ? (7 - idx) : 0;
     for(int i = 0; i < 7 - idx; i++){
         fp = 2.0 * fp;
-        if (fp > 1){
+        if (fp >= 1){
             _frac |= 1 << (7 - idx - i - 1);
             fp = fp - 1;
         }
+    }
+    
+    while ( msb == 0 && _exp > 0){
+        fp = 2.0 * fp;
+        _exp -= 1;
+        _frac <<= 1;
+        if ((_frac & mask) != 0){
+            msb = 1;
+        }
+        _frac = _frac & ~mask;
+        _frac += (fp >= 1);
+        if (fp > 1) fp -= 1;
+    }
+    if ( /*_frac & 1 && */ fp * 2.0 >= 1 && !overflow){
+        if (_frac == _bias){ _frac = 0; _exp += 1; }
+        else _frac += 1;
     }
     if (_frac == 127 && _exp == 255){
         cout << "Reach the maximum value" << endl;
         return;
     }
-    //cout <<", exp: "<<_exp<<", frac: "<<_frac<<endl;
-    if ( _frac & 1 && fp * 2.0 > 1 ){
-        if (_frac == 127){
-            _frac = 0;
-            _exp += 1;
-        }else{
-            _frac += 1;
-        }
-    }
-    
-    //cout << "f: " << f<< ", neg: " << _neg<<", exp: "<<_exp<<", frac: "<<_frac<<endl;
+    //cout << _exp << ", " << _frac <<endl;
 }
-
-
 
 #endif
