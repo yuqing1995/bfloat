@@ -34,6 +34,8 @@ public:
         bool operator==(const Bfloat16& f);
         bool operator<(const Bfloat16& f);
         bool operator>(const Bfloat16& f);
+        bool operator>=(const Bfloat16& f);
+        bool operator<=(const Bfloat16& f);
         // helper function (non-member function)
         void normalize2bfloats(Bfloat16& lhs_f, Bfloat16& rhs_f);
         void normalizebfloat(Bfloat16& f);
