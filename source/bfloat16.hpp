@@ -42,9 +42,9 @@ public:
         
 private:        
         // number of bits of exponent
-        uint16_t _exp;
+        int16_t _exp;
         // number of bits of precision
-        uint16_t _frac;
+        int16_t _frac;
         // Bias of exponent for fix 16
         uint8_t _bias;
         // true if it is a negative number or false vice versa
