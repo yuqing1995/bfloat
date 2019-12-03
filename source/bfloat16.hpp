@@ -42,9 +42,9 @@ public:
         
 private:        
         // number of bits of exponent
-        int16_t _exp;
+        int _exp;
         // number of bits of precision
-        int16_t _frac;
+        int _frac;
         // Bias of exponent for fix 16
         uint8_t _bias;
         // true if it is a negative number or false vice versa
@@ -157,7 +157,7 @@ Bfloat16 Bfloat16::operator/( Bfloat16& f ){
     Bfloat16 rhs_f = f;
     lhs_f._frac |= (1 << 7);
     rhs_f._frac |= (1 << 7);
-    
+
     int temp = 0, cnt = 0;
     for( size_t i = 0; i < 15; i++ ){
         if (cnt == 8){
@@ -180,9 +180,11 @@ Bfloat16 Bfloat16::operator/( Bfloat16& f ){
             cnt++;
         }
     }
+
     lhs_f._frac = temp - 128;
     lhs_f._exp = lhs_f._exp - rhs_f._exp + lhs_f._bias;
     lhs_f._neg = (lhs_f._neg == rhs_f._neg) ? 0 : 1;
+
     return lhs_f;
 
 }
@@ -264,9 +266,9 @@ void Bfloat16::float2binary(const float f) {
     float temp = f > 0 ? f : (0 - f);
     int integer = temp;
     float fp = temp - integer;
-    int size = (int)(log2(integer));
+    int size = (integer == 0) ? 0 : (int)(log2(integer));
     int idx = 0;
-    int8_t msb = (integer == 0) ? 0 : 1;
+    int msb = (integer == 0) ? 0 : 1;
     int mask = 1 << 7;
     bool overflow = 0;
 
@@ -277,6 +279,7 @@ void Bfloat16::float2binary(const float f) {
         _frac |= ((integer & 1) != 0) << idx;
         integer >>= 1;
     }
+
     if (size > 7){
         int dis = size - 7, flag = 0;
         overflow = 1;
@@ -285,6 +288,7 @@ void Bfloat16::float2binary(const float f) {
         if (flag == 1) _frac += 1;
     }
     _frac <<= idx < 7 ? (7 - idx) : 0;
+
     for(int i = 0; i < 7 - idx; i++){
         fp = 2.0 * fp;
         if (fp >= 1){
@@ -292,7 +296,6 @@ void Bfloat16::float2binary(const float f) {
             fp = fp - 1;
         }
     }
-    
     while ( msb == 0 && _exp > 0){
         fp = 2.0 * fp;
         _exp -= 1;
@@ -312,7 +315,6 @@ void Bfloat16::float2binary(const float f) {
         cout << "Reach the maximum value" << endl;
         return;
     }
-    //cout << _exp << ", " << _frac <<endl;
 }
 
 #endif
