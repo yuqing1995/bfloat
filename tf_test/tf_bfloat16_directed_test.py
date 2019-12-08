@@ -2,6 +2,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 import numpy
+import time
 
 dir1 = "../output/tf_test1.txt"
 dir2 = "../output/tf_test2.txt"
@@ -83,15 +84,19 @@ def test_bfloat16_subtraction():
     outputFile = open(dir_sub,'w')
     cnt = 0.0
     while(cnt < 1000):
-      val1 = 0.128 + cnt * 2;
-      val2 = 0.673 + cnt;
+      val1 = (0.63 + cnt)*2.3;
+      val2 = (0.37 + cnt)
       val1 = tf.constant( val1 , dtype=tf.float32 )
       val1 = tf.cast(val1, tf.bfloat16)
       val2 = tf.constant( val2 , dtype=tf.float32 )
       val2 = tf.cast(val2, tf.bfloat16)
       res = tf.math.subtract(val1, val2)
-      outputFile.write(str(res.numpy())+'\n')
-      cnt += 33.4;
+      outputFile.write(str(val1.numpy()))
+      outputFile.write(" - ");
+      outputFile.write(str(val2.numpy()));
+      outputFile.write(" = ");
+      outputFile.write(str(res.numpy())+'\n');
+      cnt += 12.5;
     outputFile.close()
 
 # test the addition between bfloat16
@@ -106,7 +111,11 @@ def test_bfloat16_addition():
       val2 = tf.constant( val2 , dtype=tf.float32 )
       val2 = tf.cast(val2, tf.bfloat16)
       res = tf.math.add(val1, val2)
-      outputFile.write(str(res.numpy())+'\n')
+      outputFile.write(str(val1.numpy()))
+      outputFile.write(" + ");
+      outputFile.write(str(val2.numpy()));
+      outputFile.write(" = ");
+      outputFile.write(str(res.numpy())+'\n');
       cnt += 3.4;
     outputFile.close() 
     
@@ -114,43 +123,53 @@ def test_bfloat16_addition():
 def test_bfloat16_division():
     outputFile = open(dir_divide,'w')
     cnt = 0
-    val1 = 0.369 
-    val2 = 0.748
-    while(cnt < 500):
-      val1 = cnt + val1 * 2.4;
-      val2 = val2 + cnt;
+    val1 = 2.365 
+    val2 = 1.748
+    while(cnt < 1000):
+      val1 = (cnt + val1);
+      val2 = val2 + 1.0;
       v1 = tf.constant( val1 , dtype=tf.float32 )
-      v1 = tf.cast(val1, tf.bfloat16)
+      v1 = tf.cast(v1, tf.bfloat16)
       v2 = tf.constant( val2 , dtype=tf.float32 )
-      v2 = tf.cast(val2, tf.bfloat16)
+      v2 = tf.cast(v2, tf.bfloat16)
       res = tf.math.divide(v1, v2)
-      outputFile.write(str(res.numpy())+'\n')
-      cnt += 33.4;
+      outputFile.write(str(v1.numpy()))
+      outputFile.write(" / ");
+      outputFile.write(str(v2.numpy()));
+      outputFile.write(" = ");
+      outputFile.write(str(res.numpy())+'\n');
+      cnt += 3.5;
     outputFile.close()
     
 # test the multiplication between bfloat16
 def test_bfloat16_multiply():
     outputFile = open(dir_multiply,'w')
     cnt = 0
-    while(cnt < 100):
-      val1 = 0.369 + cnt;
+    while(cnt < 50):
+      val1 = 0.365 + cnt;
       val2 = 0.748 + cnt;
       val1 = tf.constant( val1 , dtype=tf.float32 )
       val1 = tf.cast(val1, tf.bfloat16)
       val2 = tf.constant( val2 , dtype=tf.float32 )
       val2 = tf.cast(val2, tf.bfloat16)
       res = tf.math.multiply(val1, val2)
-      outputFile.write(str(res.numpy())+'\n')
-      cnt += 3.8;
+      outputFile.write(str(val1.numpy()))
+      outputFile.write(" * ");
+      outputFile.write(str(val2.numpy()));
+      outputFile.write(" = ");
+      outputFile.write(str(res.numpy())+'\n');
+      cnt += 1.4;
     outputFile.close()   
 
 if __name__ == "__main__":  
+  start_time = time.time()
   test_float32_to_bfloat16_small_range()
   test_float32_to_bfloat16_large_range()
   test_bfloat16_addition()
   test_bfloat16_subtraction()
   test_bfloat16_multiply()
   test_bfloat16_division()
+  print(time.time() - start_time)
   
       
       

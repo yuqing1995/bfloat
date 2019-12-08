@@ -5,6 +5,7 @@
 #include <bits/stdc++.h>
 #include "../source/bfloat16.hpp"
 #include "utst.h"
+#include <chrono>
 
 using namespace std;
 
@@ -181,13 +182,14 @@ void test_case_bfloat16_comparison_subtraction(){
     ofstream file1;
     file1.open (dir_sub);
     float cnt = 0.0;
+    float ans = 0.0;
     while(cnt < 1000){
-      Bfloat16 bf1 = (0.128 + cnt * 2);
-      Bfloat16 bf2 = (0.673 + cnt);
+      Bfloat16 bf1 = (0.63 + cnt)*2.3;
+      Bfloat16 bf2 = (0.37 + cnt);
       Bfloat16 bf3 = bf1 - bf2;
-      float ans = bf3.binary2float();
-      file1 << ans << "\n";
-      cnt += 33.4;
+      ans = bf3.binary2float();
+      file1 << bf1.binary2float()<<" - "<<bf2.binary2float()<<" = "<<ans<<"\n";
+      cnt += 12.5;
     }
     file1.close();
     // comparison
@@ -195,7 +197,7 @@ void test_case_bfloat16_comparison_subtraction(){
     ifstream tf;
     f.open(dir_sub);
     tf.open(tf_dir_sub);
-    comparison_helper(f, tf, 0.3);
+    comparison_helper(f, tf, 0.5);
     f.close();
     tf.close();
 }
@@ -210,7 +212,7 @@ void test_case_bfloat16_comparison_addition(){
       Bfloat16 bf2 = (0.872 + cnt);
       Bfloat16 bf3 = bf1 + bf2;
       float ans = bf3.binary2float();
-      file1 << ans << "\n";
+      file1 << bf1.binary2float()<<" + "<<bf2.binary2float()<<" = "<<ans << "\n";
       cnt += 3.4;
     }
     file1.close();
@@ -229,17 +231,17 @@ void test_case_bfloat16_comparison_division(){
     ofstream file1;
     file1.open (dir_divide);
     float cnt = 0.0;
-    float val1 = 0.369;
-    float val2 = 0.748;
-    while(cnt < 500){
-        val1 = cnt + val1 * 2.4;
-        val2 = val2 + cnt;
+    float val1 = 2.365;
+    float val2 = 1.748;
+    while(cnt < 1000){
+        val1 = cnt + val1;
+        val2 = val2 + 1.0;
         Bfloat16 bf1 = val1;
         Bfloat16 bf2 = val2;
         Bfloat16 bf3 = bf1 / bf2;
         float ans = bf3.binary2float();
-        file1 << ans << "\n";
-        cnt += 33.4;
+        file1 << bf1.binary2float()<<" / "<<bf2.binary2float()<<" = "<<ans << "\n";
+        cnt += 3.5;
     }
     file1.close();
     // comparison
@@ -257,13 +259,13 @@ void test_case_bfloat16_comparison_multiply(){
     ofstream file1;
     file1.open (dir_multiply);
     float cnt = 0.0;
-    while(cnt < 100){
-      Bfloat16 bf1 = (0.369 + cnt);
+    while(cnt < 50){
+      Bfloat16 bf1 = (0.365 + cnt);
       Bfloat16 bf2 = (0.748 + cnt);
       Bfloat16 bf3 = bf1 * bf2;
       float ans = bf3.binary2float();
-      file1 << ans << "\n";
-      cnt += 3.8;
+      file1 << bf1.binary2float()<<" * "<<bf2.binary2float()<<" = "<<ans << "\n";
+      cnt += 1.4;
     }
     file1.close();
     // comparison
@@ -280,7 +282,7 @@ void test_case_bfloat16_comparison_multiply(){
 int main( int argc, char** argv )
 {
   int n = ( argc == 1 ) ? 0 : atoi( argv[1] );
-  
+  auto start = std::chrono::high_resolution_clock::now();
   if ( ( n == 0 ) || ( n == 0 ) ) test_case_float32_to_bfloat16_simple();
   if ( ( n == 0 ) || ( n == 1 ) ) test_case_float32_to_bfloat16_more();
   if ( ( n == 0 ) || ( n == 2 ) ) test_case_bfloat16_multiplication();
@@ -292,6 +294,9 @@ int main( int argc, char** argv )
   if ( ( n == 0 ) || ( n == 8 ) ) test_case_bfloat16_comparison_addition();
   if ( ( n == 0 ) || ( n == 9 ) ) test_case_bfloat16_comparison_division();
   if ( ( n == 0 ) || ( n == 10 ) ) test_case_bfloat16_comparison_multiply();
-
+  auto finish = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = finish - start;
+  std::cout << "Elapsed time: " << elapsed.count() << " s\n";
+  
   return 0;
 }

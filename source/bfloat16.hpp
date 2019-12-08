@@ -66,6 +66,9 @@ float Bfloat16::binary2float() {
             f += pow(2.0, -(7-i));
         }
     }
+    if (_frac == 0 && _exp == 0){
+        return 0;
+    }
     // Use formular to calculate the result value based on _neg
     return _neg == 1 ? float(0.0 - (pow(2, e) * (1 + f))) : float(pow(2, e) * (1 + f));
 }
@@ -80,7 +83,7 @@ void Bfloat16::normalize2bfloats(Bfloat16& lhs_f, Bfloat16& rhs_f){
     }
     else if (lhs_f._exp < rhs_f._exp ){
         lhs_f._exp = rhs_f._exp;
-        lhs_f._frac >>= ((lhs_f._frac + 128) >> dis);
+        lhs_f._frac = ((lhs_f._frac + 128) >> dis);
         rhs_f._frac |= (1 << 7);
     }
     else {
@@ -94,17 +97,21 @@ void Bfloat16::normalizebfloat(Bfloat16& f) {
       f._neg = 1;
       f._frac = -f._frac;
     }
-    else {
+    else if (f._frac > 0){
       f._neg = 0;
     }
-    if (f._frac > 255) {
+    else {
+      f._exp = 0;
+      return;
+    }
+    while (f._frac > 255) {
       int shift = f._frac >> 8;
       f._frac = f._frac >> shift;
-      f._exp = f._exp + shift;
+      f._exp = f._exp + shift;    
     }
-    if (f._frac < 128) {
+    while (f._frac < 128) {
       f._frac = f._frac << 1;
-      f._exp -= 1; 
+      f._exp -= 1;
     }
     f._frac -= 128;
 }
@@ -120,15 +127,11 @@ Bfloat16 Bfloat16::operator+(const Bfloat16& f){
 }
 
 Bfloat16 Bfloat16::operator-(const Bfloat16& f){
-    //Bfloat16 lhs_f = *this > f ? *this : f; 
-    //Bfloat16 rhs_f = *this > f ? f : *this;
     Bfloat16 lhs_f = *this;
     Bfloat16 rhs_f = f;
     normalize2bfloats(lhs_f, rhs_f);
-    lhs_f._frac = (lhs_f._neg == 1 ? -lhs_f._frac : lhs_f._frac) \
-        - (rhs_f._neg == 1 ? -rhs_f._frac : rhs_f._frac);
+    lhs_f._frac = (lhs_f._neg == 1 ? -lhs_f._frac : lhs_f._frac) - (rhs_f._neg == 1 ? -rhs_f._frac : rhs_f._frac);
     normalizebfloat(lhs_f);
-    //lhs_f._neg = *this > f ? 0 : 1;
     return lhs_f;
 }
 
@@ -148,6 +151,7 @@ Bfloat16 Bfloat16::operator*( Bfloat16& f ){
     }
     lhs_f._frac = temp >> 7;
     normalizebfloat(lhs_f);
+    
     lhs_f._neg = (this->_neg == f._neg) ? 0 : 1;
     return lhs_f;
 }
@@ -271,7 +275,7 @@ void Bfloat16::float2binary(const float f) {
     int msb = (integer == 0) ? 0 : 1;
     int mask = 1 << 7;
     bool overflow = 0;
-
+    
     _neg = f < 0 ? 1 : 0;
     _exp = size + _bias;
 
@@ -286,6 +290,10 @@ void Bfloat16::float2binary(const float f) {
         if ((_frac & (1 << dis-1)) != 0) flag = 1;
         _frac >>= dis;
         if (flag == 1) _frac += 1;
+        if (_frac == 128){
+          _frac = 0;
+          _exp += 1;
+        }
     }
     _frac <<= idx < 7 ? (7 - idx) : 0;
 
@@ -307,7 +315,7 @@ void Bfloat16::float2binary(const float f) {
         _frac += (fp >= 1);
         if (fp > 1) fp -= 1;
     }
-    if ( /*_frac & 1 && */ fp * 2.0 >= 1 && !overflow){
+    if ( fp * 2.0 >= 1 && !overflow ){
         if (_frac == _bias){ _frac = 0; _exp += 1; }
         else _frac += 1;
     }
